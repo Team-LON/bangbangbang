@@ -4,6 +4,7 @@ import math
 import warnings
 from sys import maxsize
 import json
+from gamelib.util import Counter
 
 """
 Most of the algo code you write will be in this file unless you create new
@@ -44,6 +45,29 @@ class AlgoStrategy(gamelib.AlgoCore):
         # This is a good place to do initial setup
         self.scored_on_locations = []
 
+    def find_my_vulnerable_edges(self, game_state):
+        temp = game_state.game_map.get_edges()[2:]
+        my_edges_list = []
+        my_edges_list.extend(temp[0])
+        my_edges_list.extend(temp[1])
+        my_edges = Counter()
+
+        for edge in my_edges_list:
+            x, y = edge
+            num_walls = 0
+
+            my_stationary_attackers = game_state.get_attackers(location=edge, player_index=1)
+            num_turrets = len(my_stationary_attackers)
+            neighbours = [[x, y + 1], [x, y - 1], [x + 1, y], [x - 1, y]]
+            for point in neighbours:
+                if game_state.game_map[(point[0], point[1])] == 0:
+                    num_walls += 1
+            depth = abs(13 - y) / 13.0 * 4
+            isScoredOn = -5 if edge in self.scored_on_locations else 0
+            score = 0.5 * num_walls + 4 * num_turrets + depth + isScoredOn
+            my_edges[(x, y)] = score
+        return my_edges
+
     def on_turn(self, turn_state):
         """
         This function is called every turn with the game state wrapper as
@@ -55,6 +79,9 @@ class AlgoStrategy(gamelib.AlgoCore):
         game_state = gamelib.GameState(self.config, turn_state)
         gamelib.debug_write('Performing turn {} of your custom algo strategy'.format(game_state.turn_number))
         game_state.suppress_warnings(True)  # Comment or remove this line to enable warnings.
+        my_edges = self.find_my_vulnerable_edges(game_state)
+
+        gamelib.debug_write('Top 5 weak edges {}'.format(my_edges))
 
         self.starter_strategy(game_state)
 
@@ -112,9 +139,6 @@ class AlgoStrategy(gamelib.AlgoCore):
                     best_location = self.least_damage_spawn_location(game_state, scout_spawn_location_options)
                     game_state.attempt_spawn(SCOUT, best_location, 1000)
 
-                # Lastly, if we have spare SP, let's build some supports
-                support_locations = [[13, 2], [14, 2], [13, 3], [14, 3]]
-                game_state.attempt_spawn(SUPPORT, support_locations)
 
     def build_defences(self, game_state, wall_locations, turret_locations, support_locations):
         """
@@ -124,14 +148,13 @@ class AlgoStrategy(gamelib.AlgoCore):
         # Useful tool for setting up your base locations: https://www.kevinbai.design/terminal-map-maker
         # More community tools available at: https://terminal.c1games.com/rules#Download
 
-        # Place turrets that attack enemy units
-        # attempt_spawn will try to spawn units if we have resources, and will check if a blocking unit is already there
-        game_state.attempt_spawn(TURRET, turret_locations)
+        game_state.attempt_spawn(TURRET, turret_locations)  # build turrets
 
-        # Place walls in front of turrets to soak up damage for them
-        game_state.attempt_spawn(WALL, wall_locations)
-        # upgrade walls so they soak more damage
-        game_state.attempt_upgrade(wall_locations)
+        game_state.attempt_spawn(WALL, wall_locations)  # build walls
+
+        game_state.attempt_spawn(SUPPORT, support_locations)  # build supports
+
+        game_state.attempt_upgrade(turret_locations)  # upgrade turrets
 
     def build_reactive_defense(self, game_state):
         """
