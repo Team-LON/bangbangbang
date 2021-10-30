@@ -9,6 +9,12 @@ public enum UnitType {
     Scout,
     Demolisher,
     Interceptor,
-    Remove,
-    Upgrade;
+
+    Upgrade,
+    Remove;
+
+    public static UnitType getRandom() {
+        return values()[(int) (Math.random() * (values().length - 1))];
+    }
+
 }
