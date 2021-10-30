@@ -5,8 +5,14 @@ import com.c1games.terminal.algo.io.GameLoop;
 import com.c1games.terminal.algo.io.GameLoopDriver;
 import com.c1games.terminal.algo.map.GameState;
 import com.c1games.terminal.algo.map.MapBounds;
+import com.c1games.terminal.algo.map.SpawnCommand;
 import com.c1games.terminal.algo.map.Unit;
+import com.c1games.terminal.algo.serialization.JsonDeserializeClassFromTuple;
+import com.c1games.terminal.algo.serialization.JsonSerializeClassToTuple;
+import com.c1games.terminal.algo.units.Action;
 import com.c1games.terminal.algo.units.UnitType;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
 
 import java.util.*;
 
@@ -51,35 +57,93 @@ public class StarterAlgo implements GameLoop {
         GameIO.debug().println("Set random seed to: " + seed);
     }
 
+    /*
+    Update the gameState according to the action
+     */
+    public GameState update(GameState gameState, Action action) {
+        gameState.spawn(action.location, action.unitType);
+        return gameState;
+    }
+
+    public Action generateRandomAction(GameState gameState) {
+        Action action;
+        UnitType unitType;
+        ArrayList<Coords> coords;
+        Coords location;
+        Random random_method;
+        do {
+            // random generate a unit type
+            unitType = UnitType.getRandom();
+            // according to action type, random generate a location
+            coords = MapBounds.getBottomGrid();
+            random_method = new Random();
+            int index = random_method.nextInt(coords.size());
+            location = coords.get(index);
+
+        } while (!gameState.canSpawn(location, unitType, 1).affirmative());
+
+        action = new Action(unitType, location);
+
+        return action;
+    }
+
+    public ArrayList<Action> generateRandomActions(GameState gameState) {
+        // maintain a deep copy of the game state  --> gameStateCopy
+//        Gson gson = new Gson();
+//        String deepCopy = gson.toJson(gameState);
+//        GameState gameStateCopy = gson.fromJson(deepCopy, GameState.class);
+
+        ArrayList<Action> actions = new ArrayList<>();
+        Action action;
+        while (actions.size() < 5) {
+            action = generateRandomAction(gameState);
+            actions.add(action);
+        }
+        return actions;
+    }
     /**
      * Make a move in the game.
      */
     @Override
-    public void onTurn(GameIO io, GameState move) {
-        GameIO.debug().println("Performing turn " + move.data.turnInfo.turnNumber + " of your custom algo strategy");
-
-        buildDefenses(move);
-        buildReactiveDefenses(move);
-
-        if (move.data.turnInfo.turnNumber < 5) {
-            deployRandomInterceptors(move);
-        } else {
-            // If they have a lot of units in the first two of their rows, we can use the long range Demolisher to deal damage to them
-            if (detectEnemyUnits(move,null, List.of(14,15), null) > 10) {
-                demolisherLineStrategy(move);
-            }
-            // Otherwise lets go with a scout rush strategy where we send a ton of fast scoring units.
-            else {
-                // We only send scouts every other turn because its better to save up for a big attack.
-                if (move.data.turnInfo.turnNumber % 2 == 1) {
-                    // Lets dynamically choose which side to attack based on the expected path the units will take
-                    Coords bestLoc = leastDamageSpawnLocation(move, List.of(new Coords(13, 0), new Coords(14, 0)));
-                    for (int i = 0; i < 100; i++) {
-                        move.attemptSpawn(bestLoc,UnitType.Scout);
-                    }
-                }
-                // Lastly, lets build Supports
-                move.attemptSpawnMultiple(Arrays.asList(supportLocations),UnitType.Support);
+    public void onTurn(GameIO io, GameState gameState) {
+        GameIO.debug().println("Performing turn " + gameState.data.turnInfo.turnNumber + " of your custom algo strategy");
+        ArrayList<Action> actions = generateRandomActions(gameState);
+        for (Action action : actions) {
+            switch (action.unitType) {
+                case Wall:
+                    gameState.attemptSpawn(action.location, UnitType.Wall);
+                    GameIO.debug().println("Building a wall at " + action.location);
+                    break;
+                case Turret:
+                    gameState.attemptSpawn(action.location, UnitType.Turret);
+                    GameIO.debug().println("Building a turret at " + action.location);
+                    break;
+                case Support:
+                    gameState.attemptSpawn(action.location, UnitType.Support);
+                    GameIO.debug().println("Building a support at " + action.location);
+                    break;
+                case Scout:
+                    gameState.attemptSpawn(action.location, UnitType.Scout);
+                    GameIO.debug().println("Spawning a scout at " + action.location);
+                    break;
+                case Demolisher:
+                    gameState.attemptSpawn(action.location, UnitType.Demolisher);
+                    GameIO.debug().println("Spawning a demolisher at " + action.location);
+                    break;
+                case Interceptor:
+                    gameState.attemptSpawn(action.location, UnitType.Interceptor);
+                    GameIO.debug().println("Spawning a interceptor at " + action.location);
+                    break;
+                case Upgrade:
+                    gameState.attemptUpgrade(action.location);
+                    GameIO.debug().println("Upgrading " + action.location);
+                    break;
+                case Remove:
+                    gameState.removeStructure(action.location);
+                    GameIO.debug().println("Removing " + action.location);
+                    break;
+                default:
+                    GameIO.debug().println("Error: Invalid Unit Type");
             }
         }
     }

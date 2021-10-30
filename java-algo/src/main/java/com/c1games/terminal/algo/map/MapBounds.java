@@ -2,6 +2,8 @@ package com.c1games.terminal.algo.map;
 
 import com.c1games.terminal.algo.Coords;
 
+import java.util.ArrayList;
+
 /**
  * Static constants representing the constant status of different tiles on the map, such as whether it is on an edge, on on the board.
  */
@@ -102,4 +104,18 @@ public class MapBounds {
         return coords.x >= 0 && coords.y >= 0 && coords.x < BOARD_SIZE && coords.y < BOARD_SIZE && ARENA[coords.x][coords.y];
     }
 
+    public static ArrayList<Coords> getBottomGrid() {
+        ArrayList<Coords> coords = new ArrayList<>();
+        int start = 0;
+        int end = 27;
+        for (int j = 13; j >= 0; j--) {
+            for (int i = start; i < end + 1; i++) {
+                coords.add(new Coords(i, j));
+            }
+            start ++;
+            end --;
+            j --;
+        }
+        return coords;
+    }
 }
