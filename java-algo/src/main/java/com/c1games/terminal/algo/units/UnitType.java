@@ -18,11 +18,11 @@ public enum UnitType {
     }
 
     public static UnitType getRandomMobile() {
-        return values()[(int) (Math.random() * (4-0) + 0)];
+        return values()[(int) (Math.random() * (3-0) + 0)];
     }
 
     public static UnitType getRandomStructure() {
-        return values()[(int) (Math.random() * (8-4) + 4)];
+        return values()[(int) (Math.random() * (8-3) + 3)];
     }
 
 }
