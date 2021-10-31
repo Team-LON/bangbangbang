@@ -11,6 +11,7 @@ import com.c1games.terminal.algo.serialization.JsonDeserializeClassFromTuple;
 import com.c1games.terminal.algo.serialization.JsonSerializeClassToTuple;
 import com.c1games.terminal.algo.units.Action;
 import com.c1games.terminal.algo.units.UnitType;
+import com.c1games.terminal.algo.units.UnitTypeAtlas;
 import com.google.gson.JsonElement;
 import com.google.gson.Gson;
 
@@ -92,6 +93,10 @@ public class StarterAlgo implements GameLoop {
 //        Gson gson = new Gson();
 //        String deepCopy = gson.toJson(gameState);
 //        GameState gameStateCopy = gson.fromJson(deepCopy, GameState.class);
+
+        UnitTypeAtlas atlas = new UnitTypeAtlas(gameState.config);
+        Gson gson = FrameData.gson(atlas);
+        FrameData data = gson.fromJson(gameState.data.toString(), FrameData.class);
 
         ArrayList<Action> actions = new ArrayList<>();
         Action action;
