@@ -15,6 +15,7 @@ import com.c1games.terminal.algo.units.UnitTypeAtlas;
 import com.google.gson.JsonElement;
 import com.google.gson.Gson;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -66,6 +67,22 @@ public class StarterAlgo implements GameLoop {
         return gameState;
     }
 
+    private ArrayList<Coords> getStructureUnitLocations(GameState gameState) {
+        ArrayList<Coords> coords = null;
+        //for (FrameData.PlayerUnitList structureType :
+                //List.of(gameState.data.p1Units.wall, gameState.data.p1Units.turret, gameState.data.p1Units.support)) {
+        for (FrameData.PlayerUnit unit : gameState.data.p1Units.wall) {
+            coords.add(new Coords(unit.x, unit.y));
+        }
+        for (FrameData.PlayerUnit unit : gameState.data.p1Units.turret) {
+            coords.add(new Coords(unit.x, unit.y));
+        }
+        for (FrameData.PlayerUnit unit : gameState.data.p1Units.support) {
+            coords.add(new Coords(unit.x, unit.y));
+        }
+        return coords;
+    }
+
     public Action generateRandomStructureAction(GameState gameState) {
         Action action;
         UnitType unitType;
@@ -74,9 +91,16 @@ public class StarterAlgo implements GameLoop {
         Random random_method;
         do {
             // random generate a unit type
-            unitType = UnitType.getRandom();
+            unitType = UnitType.getRandomStructure();
             // according to action type, random generate a location
-            coords = MapBounds.getBottomGrid();
+            switch (unitType) {
+            case Upgrade:
+                // fallthrough
+            case Remove:
+                coords = getStructureUnitLocations(gameState);
+            default:
+                coords = MapBounds.getBottomGrid();
+            }
             random_method = new Random();
             int index = random_method.nextInt(coords.size());
             location = coords.get(index);
@@ -95,9 +119,9 @@ public class StarterAlgo implements GameLoop {
         Random random_method;
         do {
             // random generate a unit type
-            unitType = UnitType.getRandom();
+            unitType = UnitType.getRandomMobile();
             // according to action type, random generate a location
-            coords = MapBounds.getBottomGrid();
+            coords = MapBounds.getBottomEdges();
             random_method = new Random();
             int index = random_method.nextInt(coords.size());
             location = coords.get(index);
@@ -121,18 +145,19 @@ public class StarterAlgo implements GameLoop {
 
         ArrayList<Action> actions = new ArrayList<>();
         Action action;
-        while (actions.size() < 5) {
+        while (actions.size() < 1) {
             action = generateRandomStructureAction(gameStateCopy);
             actions.add(action);
             gameStateCopy = update(gameStateCopy, action);
         }
-        while (actions.size() < 10) {
+        while (actions.size() < 2) {
             action = generateRandomMobileAction(gameStateCopy);
             actions.add(action);
             gameStateCopy = update(gameStateCopy, action);
         }
         return actions;
     }
+
     /**
      * Make a move in the game.
      */
@@ -142,40 +167,40 @@ public class StarterAlgo implements GameLoop {
         ArrayList<Action> actions = generateRandomActions(gameState);
         for (Action action : actions) {
             switch (action.unitType) {
-                case Wall:
-                    gameState.attemptSpawn(action.location, UnitType.Wall);
-                    GameIO.debug().println("Building a wall at " + action.location);
-                    break;
-                case Turret:
-                    gameState.attemptSpawn(action.location, UnitType.Turret);
-                    GameIO.debug().println("Building a turret at " + action.location);
-                    break;
-                case Support:
-                    gameState.attemptSpawn(action.location, UnitType.Support);
-                    GameIO.debug().println("Building a support at " + action.location);
-                    break;
-                case Scout:
-                    gameState.attemptSpawn(action.location, UnitType.Scout);
-                    GameIO.debug().println("Spawning a scout at " + action.location);
-                    break;
-                case Demolisher:
-                    gameState.attemptSpawn(action.location, UnitType.Demolisher);
-                    GameIO.debug().println("Spawning a demolisher at " + action.location);
-                    break;
-                case Interceptor:
-                    gameState.attemptSpawn(action.location, UnitType.Interceptor);
-                    GameIO.debug().println("Spawning a interceptor at " + action.location);
-                    break;
-                case Upgrade:
-                    gameState.attemptUpgrade(action.location);
-                    GameIO.debug().println("Upgrading " + action.location);
-                    break;
-                case Remove:
-                    gameState.removeStructure(action.location);
-                    GameIO.debug().println("Removing " + action.location);
-                    break;
-                default:
-                    GameIO.debug().println("Error: Invalid Unit Type");
+            case Wall:
+                gameState.attemptSpawn(action.location, UnitType.Wall);
+                GameIO.debug().println("Building a wall at " + action.location);
+                break;
+            case Turret:
+                gameState.attemptSpawn(action.location, UnitType.Turret);
+                GameIO.debug().println("Building a turret at " + action.location);
+                break;
+            case Support:
+                gameState.attemptSpawn(action.location, UnitType.Support);
+                GameIO.debug().println("Building a support at " + action.location);
+                break;
+            case Scout:
+                gameState.attemptSpawn(action.location, UnitType.Scout);
+                GameIO.debug().println("Spawning a scout at " + action.location);
+                break;
+            case Demolisher:
+                gameState.attemptSpawn(action.location, UnitType.Demolisher);
+                GameIO.debug().println("Spawning a demolisher at " + action.location);
+                break;
+            case Interceptor:
+                gameState.attemptSpawn(action.location, UnitType.Interceptor);
+                GameIO.debug().println("Spawning a interceptor at " + action.location);
+                break;
+            case Upgrade:
+                gameState.attemptUpgrade(action.location);
+                GameIO.debug().println("Upgrading " + action.location);
+                break;
+            case Remove:
+                gameState.removeStructure(action.location);
+                GameIO.debug().println("Removing " + action.location);
+                break;
+            default:
+                GameIO.debug().println("Error: Invalid Unit Type");
             }
         }
     }
@@ -209,7 +234,7 @@ public class StarterAlgo implements GameLoop {
     private void buildReactiveDefenses(GameState move) {
         for (Coords loc : scoredOnLocations) {
             // Build 1 space above the breach location so that it doesn't block our spawn locations
-            move.attemptSpawn(new Coords(loc.x, loc.y +1), UnitType.Turret);
+            move.attemptSpawn(new Coords(loc.x, loc.y + 1), UnitType.Turret);
         }
     }
 
@@ -246,6 +271,7 @@ public class StarterAlgo implements GameLoop {
     /**
      * Goes through the list of locations, gets the path taken from them,
      * and loosely calculates how much damage will be taken by traveling that path assuming speed of 1.
+     *
      * @param move
      * @param locations
      * @return
@@ -279,10 +305,11 @@ public class StarterAlgo implements GameLoop {
 
     /**
      * Counts the number of a units found with optional parameters to specify what locations and unit types to count.
-     * @param move GameState
+     *
+     * @param move       GameState
      * @param xLocations Can be null, list of x locations to check for units
      * @param yLocations Can be null, list of y locations to check for units
-     * @param units Can be null, list of units to look for, null will check all
+     * @param units      Can be null, list of units to look for, null will check all
      * @return count of the number of units seen at the specified locations
      */
     private int detectEnemyUnits(GameState move, List<Integer> xLocations, List<Integer> yLocations, List<UnitType> units) {
@@ -311,7 +338,7 @@ public class StarterAlgo implements GameLoop {
         int count = 0;
         for (int x : xLocations) {
             for (int y : yLocations) {
-                Coords loc = new Coords(x,y);
+                Coords loc = new Coords(x, y);
                 if (MapBounds.inArena(loc)) {
                     for (Unit u : move.allUnits[x][y]) {
                         if (units.contains(u.type)) {
@@ -333,7 +360,7 @@ public class StarterAlgo implements GameLoop {
         for (Config.UnitInformation uinfo : move.config.unitInformation) {
             if (uinfo.unitCategory.isPresent() && move.isStructure(uinfo.unitCategory.getAsInt())) {
                 float[] costUnit = uinfo.cost();
-                if((cheapestUnit == null || costUnit[0] + costUnit[1] <= cheapestUnit.cost()[0] + cheapestUnit.cost()[1])) {
+                if ((cheapestUnit == null || costUnit[0] + costUnit[1] <= cheapestUnit.cost()[0] + cheapestUnit.cost()[1])) {
                     cheapestUnit = uinfo;
                 }
             }
@@ -342,11 +369,11 @@ public class StarterAlgo implements GameLoop {
             GameIO.debug().println("There are no structures?");
         }
 
-        for (int x = 27; x>=5; x--) {
+        for (int x = 27; x >= 5; x--) {
             move.attemptSpawn(new Coords(x, 11), move.unitTypeFromShorthand(cheapestUnit.shorthand.get()));
         }
 
-        for (int i = 0; i<22; i++) {
+        for (int i = 0; i < 22; i++) {
             move.attemptSpawn(new Coords(24, 10), UnitType.Demolisher);
         }
     }
