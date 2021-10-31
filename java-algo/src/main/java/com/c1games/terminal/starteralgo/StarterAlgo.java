@@ -66,7 +66,7 @@ public class StarterAlgo implements GameLoop {
         return gameState;
     }
 
-    public Action generateRandomAction(GameState gameState) {
+    public Action generateRandomStructureAction(GameState gameState) {
         Action action;
         UnitType unitType;
         ArrayList<Coords> coords;
@@ -80,7 +80,27 @@ public class StarterAlgo implements GameLoop {
             random_method = new Random();
             int index = random_method.nextInt(coords.size());
             location = coords.get(index);
+        } while (!gameState.canSpawn(location, unitType, 1).affirmative());
 
+        action = new Action(unitType, location);
+
+        return action;
+    }
+
+    public Action generateRandomMobileAction(GameState gameState) {
+        Action action;
+        UnitType unitType;
+        ArrayList<Coords> coords;
+        Coords location;
+        Random random_method;
+        do {
+            // random generate a unit type
+            unitType = UnitType.getRandom();
+            // according to action type, random generate a location
+            coords = MapBounds.getBottomGrid();
+            random_method = new Random();
+            int index = random_method.nextInt(coords.size());
+            location = coords.get(index);
         } while (!gameState.canSpawn(location, unitType, 1).affirmative());
 
         action = new Action(unitType, location);
@@ -102,7 +122,12 @@ public class StarterAlgo implements GameLoop {
         ArrayList<Action> actions = new ArrayList<>();
         Action action;
         while (actions.size() < 5) {
-            action = generateRandomAction(gameStateCopy);
+            action = generateRandomStructureAction(gameStateCopy);
+            actions.add(action);
+            gameStateCopy = update(gameStateCopy, action);
+        }
+        while (actions.size() < 10) {
+            action = generateRandomMobileAction(gameStateCopy);
             actions.add(action);
             gameStateCopy = update(gameStateCopy, action);
         }
