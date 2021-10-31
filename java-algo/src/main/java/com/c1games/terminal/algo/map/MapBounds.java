@@ -26,6 +26,7 @@ public class MapBounds {
      * For each direction constant, declared above, an array of all the coordinates which compose that edge.
      */
     public static final Coords[][] EDGE_LISTS;
+
     static {
         // Fill in the edges with the same logic from python starter algo.
         IS_ON_EDGE = new boolean[4][BOARD_SIZE][BOARD_SIZE];
@@ -53,14 +54,14 @@ public class MapBounds {
     }
 
     public static int getEdgeFromStart(Coords start) {
-        if (start.x < BOARD_SIZE/2) {
-            if(start.y < BOARD_SIZE/2) {
+        if (start.x < BOARD_SIZE / 2) {
+            if (start.y < BOARD_SIZE / 2) {
                 return EDGE_TOP_RIGHT;
             } else {
                 return EDGE_BOTTOM_RIGHT;
             }
         } else {
-            if(start.y < BOARD_SIZE/2) {
+            if (start.y < BOARD_SIZE / 2) {
                 return EDGE_TOP_LEFT;
             } else {
                 return EDGE_BOTTOM_LEFT;
@@ -72,6 +73,7 @@ public class MapBounds {
      * The valid area in which all units can go during the entire game.
      */
     public static final boolean[][] ARENA;
+
     static {
         // Superimpose all edges
         ARENA = new boolean[BOARD_SIZE][BOARD_SIZE];
@@ -90,7 +92,8 @@ public class MapBounds {
                 if (ARENA[x][y]) {
                     if (toggled) {
                         break;
-                    } {
+                    }
+                    {
                         toggled = true;
                     }
                 } else if (toggled) {
@@ -112,9 +115,22 @@ public class MapBounds {
             for (int i = start; i < end + 1; i++) {
                 coords.add(new Coords(i, j));
             }
-            start ++;
-            end --;
-            j --;
+            start++;
+            end--;
+            j--;
+        }
+        return coords;
+    }
+
+    public static ArrayList<Coords> getBottomEdges() {
+        ArrayList<Coords> coords = new ArrayList<>();
+        for (int i = 0; i <= 13; i++) {
+            int j = 13 - i;
+            coords.add(new Coords(i, j));
+        }
+        for (int i = 0; i <= 13; i++) {
+            int j = 14 + i;
+            coords.add(new Coords(j, i));
         }
         return coords;
     }
