@@ -8,13 +8,13 @@ public enum UnitType {
     Turret,
     Scout,
     Demolisher,
-    Interceptor,
+    Interceptor,  // Spawn
 
     Upgrade,
-    Remove;
+    Remove;  // attemptUpgrade
 
     public static UnitType getRandom() {
-        return values()[(int) (Math.random() * (values().length - 1))];
+        return values()[(int) (Math.random() * (values().length - 2))];
     }
 
 }

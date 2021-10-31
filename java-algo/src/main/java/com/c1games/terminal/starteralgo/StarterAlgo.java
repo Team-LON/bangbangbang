@@ -94,15 +94,17 @@ public class StarterAlgo implements GameLoop {
 //        String deepCopy = gson.toJson(gameState);
 //        GameState gameStateCopy = gson.fromJson(deepCopy, GameState.class);
 
-        UnitTypeAtlas atlas = new UnitTypeAtlas(gameState.config);
-        Gson gson = FrameData.gson(atlas);
-        FrameData data = gson.fromJson(gameState.data.toString(), FrameData.class);
+        // UnitTypeAtlas atlas = new UnitTypeAtlas(gameState.config);
+        // Gson gson = FrameData.gson(atlas);
+        // FrameData data = gson.fromJson(gameState.data.toString(), FrameData.class);
+        GameState gameStateCopy = new GameState(gameState.config, gameState.data);
 
         ArrayList<Action> actions = new ArrayList<>();
         Action action;
         while (actions.size() < 5) {
-            action = generateRandomAction(gameState);
+            action = generateRandomAction(gameStateCopy);
             actions.add(action);
+            gameStateCopy = update(gameStateCopy, action);
         }
         return actions;
     }
