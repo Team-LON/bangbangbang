@@ -68,7 +68,7 @@ public class StarterAlgo implements GameLoop {
     }
 
     private ArrayList<Coords> getStructureUnitLocations(GameState gameState) {
-        ArrayList<Coords> coords = null;
+        ArrayList<Coords> coords = new ArrayList<Coords>();
         //for (FrameData.PlayerUnitList structureType :
                 //List.of(gameState.data.p1Units.wall, gameState.data.p1Units.turret, gameState.data.p1Units.support)) {
         for (FrameData.PlayerUnit unit : gameState.data.p1Units.wall) {
@@ -98,9 +98,11 @@ public class StarterAlgo implements GameLoop {
                 // fallthrough
             case Remove:
                 coords = getStructureUnitLocations(gameState);
+                break;
             default:
                 coords = MapBounds.getBottomGrid();
             }
+            // get a random coordinate from coords
             random_method = new Random();
             int index = random_method.nextInt(coords.size());
             location = coords.get(index);
